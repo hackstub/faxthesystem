@@ -1,6 +1,9 @@
 python-dotenv
-python-escpos
-pyusb
 Flask
 babel
 requests
+gunicorn
+
+# For the printing daemon:
+#python-escpos
+#pyusb

@@ -6,3 +6,4 @@ assets/fork*
 cache/
 queue/
 .env
+*.log
