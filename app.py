@@ -1,6 +1,9 @@
 import os
 import sys
 import time
+import base64
+from io import BytesIO
+from PIL import Image
 from secrets import compare_digest
 from dotenv import load_dotenv
 from flask import Flask, render_template, request
@@ -14,7 +17,10 @@ if not SECRET:
     print("You should define the shared SECRET inside the .env file. Eg. SECRET=foobar")
     sys.exit(1)
 
+ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'webp'}
+
 app = Flask(__name__, static_url_path="/assets", static_folder="assets")
+app.config['MAX_CONTENT_LENGTH'] = 16 * 1000 * 1000
 
 queue = Deque(directory="./queue")
 cache = Cache(directory="./cache")
@@ -56,7 +62,8 @@ def post():
     data = {
         "from": request.form["from"],
         "text": request.form["text"],
-        "date": format_datetime(datetime.now(), "EEE d MMM HH:mm", locale="fr_FR")
+        "date": format_datetime(datetime.now(), "EEE d MMM HH:mm", locale="fr_FR"),
+        "img": None,
     }
 
     if len(queue) > 10:
@@ -71,6 +78,36 @@ def post():
         error_msg = "Uhoh, le champ text est trop court, au moins 1 caractère !"
     else:
         error_msg = None
+
+    print(request.files)
+
+    # Check if an image was provided
+    if error_msg is None and 'file' in request.files:
+
+
+        def allowed_file(filename):
+            return '.' in filename and \
+                   filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
+        file = request.files['file']
+        # If the user does not select a file, the browser submits an
+        # empty file without a filename.
+        if not file or file.filename == '':
+            error_msg = "Uhoh, le fichier n'a pas de nom ?"
+        elif not allowed_file(file.filename):
+            error_msg = "Cette extension de fichier n'est pas autorisée :'("
+        else:
+            try:
+                # Convert picture to greyscale
+                image = Image.open(file).convert('L')
+                # Cap height/width to 500px max
+                image.thumbnail((500, 500), Image.Resampling.LANCZOS)
+                # Save to base64 png
+                buffer = BytesIO()
+                image.save(buffer, format='PNG')
+                data["img"] = base64.b64encode(buffer.getvalue()).decode('utf-8')
+            except Exception as e:
+                error_msg = f"Échec de la sauvegarde de l'image : {e}"
 
     if error_msg:
         return render_template("error.html", error_msg=error_msg)
@@ -96,7 +133,6 @@ def pop():
         return "Access denied: you need to provide the appropriate secret to access this route", 401
 
     cache["last-pop"] = int(time.time())
-    # FIXME : should have a secret
     data = list(queue)
     queue.clear()
     return data

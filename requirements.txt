@@ -1,9 +1,0 @@
-python-dotenv
-Flask
-babel
-requests
-gunicorn
-
-# For the printing daemon:
-#python-escpos
-#pyusb

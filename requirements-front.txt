@@ -1,0 +1,7 @@
+python-dotenv
+Flask
+babel
+requests
+gunicorn
+diskcache
+Pillow
