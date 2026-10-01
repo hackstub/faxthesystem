@@ -39,7 +39,7 @@ python3 print-daemon.py
 ```
 
 Production
-==========
+----------
 
 For the front-end:
 - The `gunicorn.py` conf can be used to run gunicorn in a systemd service with something along the lines of `ExecStart=/var/www/faxthesystem/venv/bin/gunicorn -c /var/www/faxthesystem/gunicorn.py wsgi:app`
