@@ -92,8 +92,16 @@ def post():
         file = request.files['file']
         # If the user does not select a file, the browser submits an
         # empty file without a filename.
-        if not file or file.filename == '':
-            error_msg = "Uhoh, le fichier n'a pas de nom ?"
+        if file.filename == '':
+            #error_msg = "le fichier n'a vraiment pas de nom"
+            queue.append(data)
+            return render_template(
+                "success.html",
+                items_in_queue=len(queue),
+                last_pop=last_pop(),
+            )
+        elif not file:
+            error_msg = "Uhoh, le fichier n'existe pas du tout"
         elif not allowed_file(file.filename):
             error_msg = "Cette extension de fichier n'est pas autorisée :'("
         else:
