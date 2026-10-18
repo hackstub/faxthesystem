@@ -41,8 +41,39 @@ python3 print-daemon.py
 Production
 ----------
 
-For the front-end:
-- The `gunicorn.py` conf can be used to run gunicorn in a systemd service with something along the lines of `ExecStart=/var/www/faxthesystem/venv/bin/gunicorn -c /var/www/faxthesystem/gunicorn.py wsgi:app`
+### Front end
 
-For the print daemon:
+systemd setup This assume that you did setup stuff in `/var/www/faxthesystem`
+
+```bash
+# Create the needed user and chown all the files
+useradd faxthesystem
+usermod -a -G lp faxthesystem
+chown -R faxthesystem:faxthesystem /var/www/faxthesystem
+
+# Copy the service conf
+cp systemd.service /etc/systemd/system/faxthesystem.service
+
+# Tweak the absolute path or other parameters if needed:
+nano /etc/systemd/system/faxthesystem.service
+
+systemctl daemon-reload
+systemctl enable faxthesystem --now
+
+# Check is is indeed running with
+systemctl status faxthesystem
+```
+
+Then configure your reverse-proxy to `127.0.0.1:1312` or whatever the `bind` statement in `gunicorn.py` points to
+
+If you're hosting the service on a sub-path (for example `https://foobar.tld/fax`) you may need to append this snippet to `gunicorn.py` : 
+
+```
+raw_env = [
+    "SCRIPT_NAME=/fax"
+]
+```
+
+### Print daemon
+
 - TODO 🙃
